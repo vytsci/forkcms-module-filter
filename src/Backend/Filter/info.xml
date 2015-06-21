@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module>
+	<name>Filter</name>
+	<version>0.1.0</version>
+	<requirements>
+		<minimum_version>3.9.0</minimum_version>
+	</requirements>
+	<description>
+		<![CDATA[
+			Filter is made to make filtering more flexible for developers
+		]]>
+	</description>
+	<authors>
+		<author>
+			<name><![CDATA[Vytenis Ščiukas]]></name>
+			<url><![CDATA[http://www.vytsci.lt]]></url>
+		</author>
+	</authors>
+</module>
