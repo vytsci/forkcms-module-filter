@@ -171,7 +171,17 @@ class Filter
 
             if (!empty($queryFilterParts)) {
                 $queryFilter .= implode(' AND ', $queryFilterParts);
-                $this->query = $this->query . $queryFilter;
+
+                $positionGroupBy = stripos($this->query, 'GROUP BY');
+
+                if ($positionGroupBy === false) {
+                    $this->query = $this->query . $queryFilter;
+                } else {
+                    $this->query =
+                        substr($this->query, 0, $positionGroupBy)
+                        . $queryFilter . ' '
+                        . substr($this->query, $positionGroupBy);
+                }
             }
         }
 
@@ -183,7 +193,7 @@ class Filter
      *
      * @param \SpoonTemplate $tpl The template instance wherein the form will be parsed.
      */
-    public function parse($tpl)
+    public function parse(\SpoonTemplate $tpl)
     {
         $this->frm->parse($tpl);
     }
