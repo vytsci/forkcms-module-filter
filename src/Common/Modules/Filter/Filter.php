@@ -5,7 +5,8 @@ namespace Common\Modules\Filter;
 use Symfony\Component\HttpFoundation\Request;
 use Backend\Core\Engine\Model as BackendModel;
 use Backend\Core\Engine\Header as BackendHeader;
-use Backend\Core\Engine\Form as BackendForm;
+use Common\Core\Model as CommonModel;
+use Common\Core\Form as CommonForm;
 
 /**
  * Class Filter
@@ -24,7 +25,7 @@ class Filter
     protected $request;
 
     /**
-     * @var BackendForm
+     * @var CommonForm
      */
     protected $frm;
 
@@ -59,9 +60,9 @@ class Filter
     )
     {
         $this->name = $name;
-        $this->header = BackendModel::getContainer()->get('header');
-        $this->request = BackendModel::getContainer()->get('request');
-        $this->frm = new BackendForm($name, $action, $method, $useToken, $useGlobalError);
+        $this->header = CommonModel::getContainer()->get('header');
+        $this->request = CommonModel::getContainer()->get('request');
+        $this->frm = new CommonForm($name, $action, $method, $useToken, $useGlobalError);
     }
 
     /**
@@ -147,7 +148,9 @@ class Filter
         if (empty($this->query)) {
             $this->query = $query;
 
-            $queryFilter = false === stripos($this->query, ' where ')?' WHERE ':' AND ';
+            $positionOfLastFrom = strripos($this->query, ' from ');
+
+            $queryFilter = false === stripos($this->query, ' where ', $positionOfLastFrom)?' WHERE ':' AND ';
             $queryFilterParts = array();
 
             /**
