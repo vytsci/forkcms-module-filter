@@ -1,6 +1,6 @@
 <?php
 
-namespace Common\Modules\Filter;
+namespace Common\Modules\Filter\Engine;
 
 use Symfony\Component\HttpFoundation\Request;
 use Backend\Core\Engine\Model as BackendModel;
@@ -14,6 +14,7 @@ use Common\Core\Form as CommonForm;
  */
 class Filter
 {
+
     /**
      * @var BackendHeader
      */
@@ -45,6 +46,11 @@ class Filter
     private $query;
 
     /**
+     * @var bool
+     */
+    private $idle = true;
+
+    /**
      * @param string $name
      * @param null $action
      * @param string $method
@@ -57,12 +63,36 @@ class Filter
         $method = 'get',
         $useToken = true,
         $useGlobalError = true
-    )
-    {
+    ) {
         $this->name = $name;
         $this->header = CommonModel::getContainer()->get('header');
         $this->request = CommonModel::getContainer()->get('request');
         $this->frm = new CommonForm($name, $action, $method, $useToken, $useGlobalError);
+    }
+
+    /**
+     * @param $name
+     * @return Criteria
+     * @throws \Exception
+     */
+    public function getCriteria($name)
+    {
+        if (!isset($this->criteria[$name])) {
+            throw new \Exception('Such criteria does not exist');
+        }
+
+        return $this->criteria[$name];
+    }
+
+    /**
+     * @param Criteria $criteria
+     * @return $this
+     */
+    public function addCriteria(Criteria $criteria)
+    {
+        $this->criteria[$criteria->getName()] = $criteria;
+
+        return $this;
     }
 
     /**
@@ -73,7 +103,7 @@ class Filter
      */
     public function addTextCriteria($name, $columns, $operator = Helper::OPERATOR_EQUAL)
     {
-        $this->criteria[] = new Criteria(
+        $this->criteria[$name] = new Criteria(
             $name,
             $columns,
             $operator,
@@ -91,7 +121,7 @@ class Filter
      */
     public function addCheckboxCriteria($name, $columns, $operator = Helper::OPERATOR_EQUAL)
     {
-        $this->criteria[] = new Criteria(
+        $this->criteria[$name] = new Criteria(
             $name,
             $columns,
             $operator,
@@ -108,13 +138,13 @@ class Filter
      * @param string $operator
      * @return $this
      */
-    public function addDropdownCriteria($name, $columns, $values, $operator = Helper::OPERATOR_EQUAL)
+    public function addDropdownCriteria($name, $columns, $values = array(), $operator = Helper::OPERATOR_EQUAL)
     {
-        $this->criteria[] = new Criteria(
+        $this->criteria[$name] = new Criteria(
             $name,
             $columns,
             $operator,
-            $this->frm->addDropdown($name, $values, $this->request->get($name))
+            $this->frm->addDropdown($name, $values, $this->request->get($name))->setDefaultElement('-', '-1')
         );
 
         return $this;
@@ -129,7 +159,7 @@ class Filter
      */
     public function addRadiobuttonCriteria($name, $columns, $values, $operator = Helper::OPERATOR_EQUAL)
     {
-        $this->criteria[] = new Criteria(
+        $this->criteria[$name] = new Criteria(
             $name,
             $columns,
             $operator,
@@ -150,25 +180,25 @@ class Filter
 
             $positionOfLastFrom = strripos($this->query, ' from ');
 
-            $queryFilter = false === stripos($this->query, ' where ', $positionOfLastFrom)?' WHERE ':' AND ';
+            $queryFilter = false === stripos($this->query, ' where ', $positionOfLastFrom) ? ' WHERE ' : ' AND ';
             $queryFilterParts = array();
 
             /**
              * @var $criteria Criteria
              */
             foreach ($this->criteria as $criteria) {
-                if ($criteria->getField()->isFilled()) {
+                if ($criteria->isFilled()) {
                     $parts = array();
                     foreach ($criteria->getColumns() as $column) {
                         $value = Helper::getOperatorBasedValue(
                             $criteria->getOperator(),
-                            $criteria->getField()->getValue()
+                            $criteria->getValue()
                         );
                         $parts[] = "{$column} {$criteria->getOperator()} {$value}";
                     }
 
                     $queryFilterPart = implode(' OR ', $parts);
-                    $queryFilterParts[] = count($parts) > 1?'(' . $queryFilterPart . ')':$queryFilterPart;
+                    $queryFilterParts[] = count($parts) > 1 ? '('.$queryFilterPart.')' : $queryFilterPart;
                 }
             }
 
@@ -178,17 +208,27 @@ class Filter
                 $positionGroupBy = stripos($this->query, 'GROUP BY');
 
                 if ($positionGroupBy === false) {
-                    $this->query = $this->query . $queryFilter;
+                    $this->query = $this->query.$queryFilter;
                 } else {
                     $this->query =
                         substr($this->query, 0, $positionGroupBy)
-                        . $queryFilter . ' '
-                        . substr($this->query, $positionGroupBy);
+                        .$queryFilter.' '
+                        .substr($this->query, $positionGroupBy);
                 }
+
+                $this->idle = false;
             }
         }
 
         return $this->query;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isIdle()
+    {
+        return (bool)$this->idle;
     }
 
     /**

@@ -1,6 +1,8 @@
 <?php
 
-namespace Common\Modules\Filter;
+namespace Common\Modules\Filter\Engine;
+
+use Common\Core\Model as CommonModel;
 
 /**
  * Class Criteria
@@ -8,6 +10,7 @@ namespace Common\Modules\Filter;
  */
 class Criteria
 {
+
     /**
      * @var string
      */
@@ -29,20 +32,42 @@ class Criteria
     private $field;
 
     /**
+     * @var string
+     */
+    private $value;
+
+    /**
      * @param $name
      * @param $columns
      * @param $operator
      * @param \SpoonFormElement $field
      */
-    function __construct($name, $columns, $operator, \SpoonFormElement $field)
+    function __construct($name, $columns, $operator, \SpoonFormAttributes $field = null, $value = null)
     {
         $this
             ->setName($name)
             ->setColumns($columns)
             ->setOperator($operator)
-            ->setField($field);
+            ->setField($field)
+            ->setValue($value);
     }
 
+    /**
+     * @return bool
+     */
+    public function isFilled()
+    {
+        if (
+            $this->hasField()
+            && $this->field->isSubmitted()
+            && $this->field->getValue() != ''
+            && $this->field->getValue() != '-1'
+        ) {
+            return true;
+        }
+
+        return isset($this->value);
+    }
 
     /**
      * @return string
@@ -88,6 +113,10 @@ class Criteria
      */
     public function setColumns($columns)
     {
+        if (!is_array($columns)) {
+            $columns = array($columns);
+        }
+
         $this->columns = $columns;
 
         return $this;
@@ -118,11 +147,11 @@ class Criteria
     }
 
     /**
-     * @return \SpoonFormElement
+     * @return bool
      */
-    public function getField()
+    public function hasField()
     {
-        return $this->field;
+        return isset($this->field);
     }
 
     /**
@@ -132,6 +161,37 @@ class Criteria
     public function setField($field)
     {
         $this->field = $field;
+
+        return $this;
+    }
+
+    /**
+     * @return \SpoonFormElement
+     */
+    public function getField()
+    {
+        return $this->field;
+    }
+
+    /**
+     * @return string
+     */
+    public function getValue()
+    {
+        if ($this->hasField() && $this->isFilled()) {
+            return $this->field->getValue();
+        }
+
+        return $this->value;
+    }
+
+    /**
+     * @param $value
+     * @return $this
+     */
+    public function setValue($value)
+    {
+        $this->value = $value;
 
         return $this;
     }

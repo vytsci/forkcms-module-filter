@@ -1,22 +1,32 @@
 <?php
 
-namespace Common\Modules\Filter;
+namespace Common\Modules\Filter\Engine;
 
 /**
  * Class Helper
- * @package Common\Modules\Filter
+ * @package Common\Modules\Filter\Engine
  */
 class Helper
 {
+
     const OPERATOR_EQUAL = '=';
+
     const OPERATOR_EQUAL_NOT = '<>';
+
     const OPERATOR_EQUAL_LESS = '<=';
+
     const OPERATOR_EQUAL_GREATER = '>=';
+
     const OPERATOR_LESS = '<';
+
     const OPERATOR_GREATER = '>';
+
     const OPERATOR_PATTERN = 'LIKE';
+
     const OPERATOR_PATTERN_NOT = 'NOT LIKE';
+
     const OPERATOR_BOOL = 'IS';
+
     const OPERATOR_BOOL_NOT = 'IS NOT';
 
     /**
@@ -33,7 +43,7 @@ class Helper
                 break;
             case self::OPERATOR_BOOL:
             case self::OPERATOR_BOOL_NOT:
-                $value = $value == 'null'?"NULL":"'{$value}'";
+                $value = $value == 'null' ? "NULL" : "'{$value}'";
                 break;
             default:
                 $value = "'{$value}'";
@@ -58,7 +68,7 @@ class Helper
             self::OPERATOR_PATTERN,
             self::OPERATOR_PATTERN_NOT,
             self::OPERATOR_BOOL,
-            self::OPERATOR_BOOL_NOT
+            self::OPERATOR_BOOL_NOT,
         );
 
         return in_array($operator, $allowed);

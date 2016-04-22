@@ -10,6 +10,7 @@ use Backend\Core\Installer\ModuleInstaller;
  */
 class Installer extends ModuleInstaller
 {
+
     /**
      * Install the module
      */
