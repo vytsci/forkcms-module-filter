@@ -81,9 +81,6 @@ Everything is just like simple form.
 {/form:filter}
 ```
 
-## Limitations
-This thing currently has one limitation, you can't filter any joined data that needs GROUP BY option within query.
-
 ## Issues
 If you are having any issues, please create issue at [Github](https://github.com/vytenizs/forkcms-module-filter/issues).
 Or contact me directly. Thank you.
