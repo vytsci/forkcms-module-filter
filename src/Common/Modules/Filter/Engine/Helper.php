@@ -29,6 +29,8 @@ class Helper
 
     const OPERATOR_BOOL_NOT = 'IS NOT';
 
+    const OPERATOR_IN = 'IN';
+
     /**
      * @param $operator
      * @param $value
@@ -44,6 +46,9 @@ class Helper
             case self::OPERATOR_BOOL:
             case self::OPERATOR_BOOL_NOT:
                 $value = $value == 'null' ? "NULL" : "'{$value}'";
+                break;
+            case self::OPERATOR_IN:
+                $value = '(\''.(is_array($value)?implode('\', \'', $value):$value).'\')';
                 break;
             default:
                 $value = "'{$value}'";
@@ -69,6 +74,7 @@ class Helper
             self::OPERATOR_PATTERN_NOT,
             self::OPERATOR_BOOL,
             self::OPERATOR_BOOL_NOT,
+            self::OPERATOR_IN,
         );
 
         return in_array($operator, $allowed);

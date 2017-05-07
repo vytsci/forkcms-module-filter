@@ -71,6 +71,18 @@ class Filter
     }
 
     /**
+     * @param $form
+     *
+     * @return $this
+     */
+    public function setForm($form)
+    {
+        $this->frm = $form;
+
+        return $this;
+    }
+
+    /**
      * @param $name
      * @return Criteria
      * @throws \Exception
@@ -108,6 +120,26 @@ class Filter
             $columns,
             $operator,
             $this->frm->addText($name, $this->request->get($name))
+        );
+
+        return $this;
+    }
+
+    /**
+     * @param $name
+     * @param $columns
+     * @param null $value
+     * @param string $operator
+     *
+     * @return $this
+     */
+    public function addDateCriteria($name, $columns, $value = null, $operator = Helper::OPERATOR_EQUAL)
+    {
+        $this->criteria[$name] = new Criteria(
+            $name,
+            $columns,
+            $operator,
+            $this->frm->addDate($name, $this->request->get($name, $value))
         );
 
         return $this;
@@ -173,14 +205,14 @@ class Filter
      * @param $query
      * @return string
      */
-    public function getQuery($query)
+    public function getQuery($query = null)
     {
         if (empty($this->query)) {
-            $this->query = $query;
+            $queryGenerated = $query;
 
-            $positionOfLastFrom = strripos($this->query, ' from ');
+            $positionOfLastFrom = strripos($queryGenerated, ' from ');
 
-            $queryFilter = false === stripos($this->query, ' where ', $positionOfLastFrom) ? ' WHERE ' : ' AND ';
+            $queryFilter = false === stripos($queryGenerated, ' where ', $positionOfLastFrom) ? ' WHERE ' : ' AND ';
             $queryFilterParts = array();
 
             /**
@@ -205,18 +237,39 @@ class Filter
             if (!empty($queryFilterParts)) {
                 $queryFilter .= implode(' AND ', $queryFilterParts);
 
-                $positionGroupBy = stripos($this->query, 'GROUP BY');
+                $positionGroupBy = stripos($queryGenerated, 'GROUP BY');
+                $positionOrderBy = stripos($queryGenerated, 'ORDER BY');
+                $positionHaving = stripos($queryGenerated, 'HAVING');
 
-                if ($positionGroupBy === false) {
-                    $this->query = $this->query.$queryFilter;
+                $position = false;
+                $positions = array();
+                if ($positionGroupBy !== false) {
+                    $positions[] = $positionGroupBy;
+                }
+                if ($positionOrderBy !== false) {
+                    $positions[] = $positionOrderBy;
+                }
+                if ($positionHaving !== false) {
+                    $positions[] = $positionHaving;
+                }
+                if (!empty($positions)) {
+                    $position = min($positions);
+                }
+
+                if ($position === false) {
+                    $queryGenerated = $queryGenerated.$queryFilter;
                 } else {
-                    $this->query =
-                        substr($this->query, 0, $positionGroupBy)
+                    $queryGenerated =
+                        substr($queryGenerated, 0, $position)
                         .$queryFilter.' '
-                        .substr($this->query, $positionGroupBy);
+                        .substr($queryGenerated, $position);
                 }
 
                 $this->idle = false;
+            }
+
+            if (isset($query)) {
+                $this->query = $queryGenerated;
             }
         }
 
